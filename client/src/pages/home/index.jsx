@@ -339,7 +339,6 @@ function UserPlans(props) {
         const { clientSecret } = data;
         const response = await stripe.confirmCardPayment(clientSecret, {
           payment_method: {
-            receipt_email: email,
             card: elements.getElement(CardElement),
             billing_details: {
               name: userName,
