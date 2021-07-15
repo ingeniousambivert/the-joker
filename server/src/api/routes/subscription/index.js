@@ -2,6 +2,7 @@ const express = require("express");
 const { secureRoute } = require("@api/middlewares");
 const {
   CreateSubscription,
+  UpdateSubscription,
   DeleteSubscription,
 } = require("@api/controllers/subscription");
 
@@ -12,5 +13,7 @@ module.exports = (app) => {
 
   route.post("/create", secureRoute, CreateSubscription);
 
-  route.post("/delete", secureRoute, DeleteSubscription);
+  route.patch("/update", secureRoute, UpdateSubscription);
+
+  route.patch("/delete", secureRoute, DeleteSubscription);
 };

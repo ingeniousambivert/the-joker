@@ -37,8 +37,7 @@ class SubscriptionService {
           });
         } else {
           logger.error(
-            "SubscriptionService.Create",
-            "Product price ids missing in env"
+            "SubscriptionService.Create: Product price ids missing in env"
           );
           reject(400);
         }
@@ -51,24 +50,42 @@ class SubscriptionService {
 
   async Update(params) {
     return new Promise(async (resolve, reject) => {
-      const { email } = params;
+      const { email, plan } = params;
+      let priceId = null;
+      if (plan === "basic") {
+        priceId = process.env.PRODUCT_BASIC;
+      } else if (plan === "pro") {
+        priceId = process.env.PRODUCT_PRO;
+      }
       try {
-        const { subscriptionID } = await UserModel.findOne({ email });
+        const user = await UserModel.findOne({ email });
+        const { subscriptionID } = user;
         if (subscriptionID) {
-          const deletedSubscription = await Stripe.subscriptions.del(
+          const subscription = await Stripe.subscriptions.retrieve(
             subscriptionID
           );
-          await UserModel.findOneAndUpdate({ email }, { subscriptionID: null });
-          resolve(200);
+          const updatedSubscription = await Stripe.subscriptions.update(
+            subscriptionID,
+            {
+              cancel_at_period_end: false,
+              items: [
+                {
+                  id: subscription.items.data[0].id,
+                  price: priceId,
+                },
+              ],
+            }
+          );
+          resolve(updatedSubscription);
         } else {
           logger.error(
-            "SubscriptionService.Delete",
-            "User missing subsciption ID"
+            "SubscriptionService.Update: User missing subsciption ID"
           );
           reject(400);
         }
       } catch (error) {
-        logger.error("SubscriptionService.Delete", error);
+        console.log(error.message);
+        logger.error("SubscriptionService.Update", error);
         reject(500);
       }
     });
@@ -80,15 +97,11 @@ class SubscriptionService {
       try {
         const { subscriptionID } = await UserModel.findOne({ email });
         if (subscriptionID) {
-          const deletedSubscription = await Stripe.subscriptions.del(
-            subscriptionID
-          );
-          await UserModel.findOneAndUpdate({ email }, { subscriptionID: null });
+          await Stripe.subscriptions.del(subscriptionID);
           resolve(200);
         } else {
           logger.error(
-            "SubscriptionService.Delete",
-            "User missing subsciption ID"
+            "SubscriptionService.Delete: User missing subsciption ID"
           );
           reject(400);
         }
@@ -97,6 +110,15 @@ class SubscriptionService {
         reject(500);
       }
     });
+  }
+
+  async Webhook(rawBody, stripeSign) {
+    const event = Stripe.webhooks.constructEvent(
+      rawBody,
+      stripeSign,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+    return event;
   }
 }
 

@@ -61,6 +61,12 @@ class AuthService {
         if (user) {
           if (await isValidPassword(password, user.password)) {
             const { _id } = user;
+            const isTrialExpired =
+              user.plan !== "free" && user.endDate < new Date().getTime();
+            if (isTrialExpired) {
+              user.hasTrial = false;
+              user.save();
+            }
             const accessToken = await generateAccessToken(_id);
             const refreshToken = await generateRefreshToken(_id);
             resolve({ accessToken, refreshToken, id: _id });

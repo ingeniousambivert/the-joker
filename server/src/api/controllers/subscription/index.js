@@ -21,6 +21,20 @@ async function CreateSubscription(req, res) {
   }
 }
 
+async function UpdateSubscription(req, res) {
+  try {
+    const { email, plan } = req.body;
+    if (email && plan) {
+      const result = await subscriptionService.Update({ email, plan });
+      res.status(200).json(result);
+    } else {
+      res.status(400).send(createError(400));
+    }
+  } catch (error) {
+    res.status(error).send(createError(error));
+  }
+}
+
 async function DeleteSubscription(req, res) {
   try {
     const { email } = req.body;
@@ -35,4 +49,4 @@ async function DeleteSubscription(req, res) {
   }
 }
 
-module.exports = { CreateSubscription, DeleteSubscription };
+module.exports = { CreateSubscription, UpdateSubscription, DeleteSubscription };
