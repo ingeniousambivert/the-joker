@@ -22,6 +22,7 @@ async function GetUser(req, res) {
 async function UpdateUser(req, res) {
   try {
     const { id } = req.params;
+
     if (id) {
       const data = req.body;
       const headerToken = getTokenFromHeader(req);

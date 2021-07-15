@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
+const Stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const logger = require("@helpers/logger");
 const UserModel = require("@models/users");
 const {
@@ -26,12 +27,13 @@ class AuthService {
           const verifyToken = crypto.randomBytes(32).toString("hex");
           const verifyTokenHash = await bcrypt.hash(verifyToken, 10);
           const verifyExpires = getIncrementDate(24);
-
+          const customer = await Stripe.customers.create({ email });
           const newUser = new UserModel({
             firstname,
             lastname,
             email,
             password,
+            customerID: customer.id,
             verifyToken: verifyTokenHash,
             verifyExpires,
           });
@@ -41,6 +43,7 @@ class AuthService {
           const refreshToken = await generateRefreshToken(_id);
           const mailerParams = { email, id: _id, token: verifyToken };
           await mailerService.Send(mailerParams, "verifyEmail");
+
           resolve({ accessToken, refreshToken, id: _id });
         }
       } catch (error) {

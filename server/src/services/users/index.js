@@ -1,6 +1,5 @@
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
-
 const logger = require("@helpers/logger");
 const UserModel = require("@models/users");
 const { isValidPassword, verifyAccessToken } = require("@helpers/auth");
