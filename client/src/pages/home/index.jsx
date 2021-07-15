@@ -79,35 +79,24 @@ function InitialPlans(props) {
     if (!stripe || !elements) {
       setShowCheckout(false);
     }
+    const { email, customerID } = user;
     try {
-      if (selectedPlan === "free") {
+      if (selectedPlan !== "free") {
         setLoading(true);
-        const { email } = user;
-        const response = await client.post(
-          "/subscription/delete",
-          { email },
-          { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-        console.log(response);
-      } else {
-        setLoading(true);
-        const { email, customerID } = user;
         const { data } = await client.post(
           "/subscription/create",
           { email, customerId: customerID, plan: selectedPlan },
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
         const { clientSecret } = data;
-        const response = await stripe.confirmCardPayment(clientSecret, {
+        await stripe.confirmCardPayment(clientSecret, {
           payment_method: {
-            receipt_email: email,
             card: elements.getElement(CardElement),
             billing_details: {
               name: userName,
             },
           },
         });
-        console.log(response);
       }
       setLoading(false);
       setShowInitialPlans(false);
@@ -261,7 +250,7 @@ function InitialPlans(props) {
   );
 }
 
-function UserPlans(props) {
+function UpdatePlans(props) {
   const stripe = useStripe();
   const elements = useElements();
 
@@ -269,13 +258,14 @@ function UserPlans(props) {
   const [error, setError] = useState(null);
   const [showCheckout, setShowCheckout] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const { user, setShowPlans, auth } = props;
+  const { user, setShowPlans, auth, getData } = props;
   const { accessToken } = auth;
   const { register, handleSubmit } = useForm({ defaultValues: user });
 
   const userName = user.firstname + user.lastname;
 
   const toggleCheckout = () => {
+    setError(null);
     setShowCheckout(!showCheckout);
   };
 
@@ -322,31 +312,39 @@ function UserPlans(props) {
       if (selectedPlan === "free") {
         setLoading(true);
         const { email } = user;
-        const response = await client.post(
+        await client.patch(
           "/subscription/delete",
           { email },
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
-        console.log(response);
       } else {
         setLoading(true);
-        const { email, customerID } = user;
-        const { data } = await client.post(
-          "/subscription/create",
-          { email, customerId: customerID, plan: selectedPlan },
-          { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-        const { clientSecret } = data;
-        const response = await stripe.confirmCardPayment(clientSecret, {
-          payment_method: {
-            card: elements.getElement(CardElement),
-            billing_details: {
-              name: userName,
+        const { plan, customerID, email } = user;
+        if (plan === "free") {
+          const { data } = await client.post(
+            "/subscription/create",
+            { email, customerId: customerID, plan: selectedPlan },
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+          );
+          const { clientSecret } = data;
+          await stripe.confirmCardPayment(clientSecret, {
+            payment_method: {
+              card: elements.getElement(CardElement),
+              billing_details: {
+                name: userName,
+              },
             },
-          },
-        });
-        console.log(response);
+          });
+        } else {
+          await client.patch(
+            "/subscription/update",
+            { email, plan: selectedPlan },
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+          );
+        }
       }
+
+      getData(auth);
       setLoading(false);
       setShowPlans(false);
       setShowCheckout(false);
@@ -388,13 +386,13 @@ function UserPlans(props) {
                     <button
                       type="submit"
                       disabled={!stripe}
-                      className="text-sm px-6 py-1 mt-4 text-white focus:outline-none bg-red-500 rounded hover:bg-red-600 transition duration-300"
-                    >
-                      {loading ? "Cancelling" : "Cancel"}
-                    </button>
-                    <button
                       className="text-sm px-6 py-1 mt-4 text-white shadow focus:outline-none bg-indigo-500 rounded hover:bg-indigo-600 transition duration-300"
+                    >
+                      {loading ? "Cancelling" : "Confirm"}
+                    </button>{" "}
+                    <button
                       onClick={toggleCheckout}
+                      className="text-sm px-6 py-1 mt-4 text-indigo-500 shadow focus:outline-none border bg-white rounded hover:bg-gray-100 transition duration-300"
                     >
                       Go Back
                     </button>
@@ -407,7 +405,7 @@ function UserPlans(props) {
               <ModalHeader>
                 <p>Pay with your card</p>
                 <p className="text-sm font-semibold text-gray-400 mt-2">
-                  Cancelling to&nbsp;
+                  Subscribing to&nbsp;
                   <span className="capitalize text-indigo-500 font-semibold">
                     {selectedPlan}
                   </span>
@@ -775,8 +773,9 @@ function HomePage() {
           ) : (
             <Fragment>
               {showPlans ? (
-                <UserPlans
+                <UpdatePlans
                   auth={auth}
+                  getData={getData}
                   user={user}
                   setShowPlans={setShowPlans}
                 />
