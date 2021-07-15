@@ -1,12 +1,12 @@
 import React from "react";
 import produce from "immer";
 import { get } from "lodash";
-import { sanitizeString, storage } from "../utils";
+import { storage } from "../utils";
 
 const initialState = {
   user: storage.get("user") || null,
   auth: storage.get("auth") || null,
-  todos: storage.get("todos") || null,
+  content: storage.get("content") || null,
   isAuthenticated: storage.get("isAuthenticated") || false,
 };
 
@@ -22,8 +22,8 @@ const reducer = (state, action) => {
     revokeUser: (state) => {
       state.isAuthenticated = false;
       storage.set("isAuthenticated", false);
-      state.todos = null;
-      storage.set("todos", null);
+      state.content = null;
+      storage.set("content", null);
       state.user = null;
       storage.set("user", null);
       state.auth = null;
@@ -35,25 +35,9 @@ const reducer = (state, action) => {
       state.user = user;
     },
 
-    setTodos: (state, { todos }) => {
-      storage.set("todos", todos);
-      state.todos = todos;
-    },
-
-    filterTodos: (state, { search }) => {
-      const todos = state.todos;
-      const filtered = [];
-      if (search !== "" && todos !== null) {
-        todos.forEach((todo) => {
-          if (sanitizeString(todo.title).includes(sanitizeString(search))) {
-            filtered.push(todo);
-          }
-        });
-        state.todos = filtered;
-      } else {
-        const todos = storage.get("todos");
-        state.todos = todos;
-      }
+    setContent: (state, { content }) => {
+      storage.set("content", content);
+      state.content = content;
     },
   };
 

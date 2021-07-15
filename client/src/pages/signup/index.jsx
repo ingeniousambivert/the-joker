@@ -22,12 +22,12 @@ function SignupPage() {
       const auth = response.data;
       dispatch({ type: "authenticateUser", auth });
     } catch (error) {
-      setLoading(false);
       if (error.message.includes(409)) {
         setResult(409);
       } else {
         setResult(500);
       }
+      setLoading(false);
     }
   };
 

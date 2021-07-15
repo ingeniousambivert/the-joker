@@ -6,6 +6,9 @@
     "serve": "vite preview"
   },
   "dependencies": {
+    "@reach/portal": "^0.15.3",
+    "@stripe/react-stripe-js": "^1.4.1",
+    "@stripe/stripe-js": "^1.16.0",
     "autoprefixer": "^10.3.0",
     "axios": "^0.21.1",
     "immer": "^9.0.5",
