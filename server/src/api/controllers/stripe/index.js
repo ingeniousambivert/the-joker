@@ -102,11 +102,12 @@ async function stripeWebhooks(req, res) {
       }
 
       default:
+        logger.error(`stripeWebhooks: Unhandled event type ${event.type}`);
         break;
     }
     res.sendStatus(200);
   } catch (error) {
-    logger.error(`stripeWebhooks:${error.message}`);
+    logger.error(`stripeWebhooks: ${error.message}`);
     res.sendStatus(500);
   }
 }

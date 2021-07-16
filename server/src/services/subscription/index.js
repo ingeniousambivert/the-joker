@@ -21,8 +21,7 @@ class SubscriptionService {
                 price: priceId,
               },
             ],
-            payment_behavior: "default_incomplete",
-            expand: ["latest_invoice.payment_intent"],
+            trial_period_days: process.env.TRIAL_DAYS,
           });
 
           await UserModel.findOneAndUpdate(
@@ -30,11 +29,7 @@ class SubscriptionService {
             { subscriptionID: subscription.id }
           );
 
-          resolve({
-            subscriptionId: subscription.id,
-            clientSecret:
-              subscription.latest_invoice.payment_intent.client_secret,
-          });
+          resolve({ subscriptionId: subscription.id });
         } else {
           logger.error(
             "SubscriptionService.Create: Product price ids missing in env"
