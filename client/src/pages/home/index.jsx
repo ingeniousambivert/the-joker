@@ -595,22 +595,6 @@ function UserContent(props) {
                       </span>
                       &nbsp;plan.
                     </p>
-                    {user.hasTrial && (
-                      <p>
-                        Your trial period ends on&nbsp;
-                        <span className="text-indigo-500 font-semibold">
-                          {new Date(user.endDate).toString()}
-                        </span>
-                      </p>
-                    )}
-                    {!user.hasTrial && user.endDate && (
-                      <p>
-                        Your plan ends on&nbsp;
-                        <span className="text-indigo-500 font-semibold">
-                          {new Date(user.endDate).toString()}
-                        </span>
-                      </p>
-                    )}
                   </div>
                 </div>
               </div>
