@@ -21,6 +21,8 @@ class SubscriptionService {
                 price: priceId,
               },
             ],
+            payment_behavior: "default_incomplete",
+            expand: ["pending_setup_intent"],
             trial_period_days: process.env.TRIAL_DAYS,
           });
 
@@ -28,8 +30,10 @@ class SubscriptionService {
             { email },
             { subscriptionID: subscription.id }
           );
-
-          resolve({ subscriptionId: subscription.id });
+          resolve({
+            subscriptionId: subscription.id,
+            clientSecret: subscription.pending_setup_intent.client_secret,
+          });
         } else {
           logger.error(
             "SubscriptionService.Create: Product price ids missing in env"
