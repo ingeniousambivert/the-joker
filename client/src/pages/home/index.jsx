@@ -83,19 +83,15 @@ function InitialPlans(props) {
     try {
       if (selectedPlan !== "free") {
         setLoading(true);
-        const { data } = await client.post(
+        await client.post(
           "/subscription/create",
           { email, customerId: customerID, plan: selectedPlan },
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
-        const { clientSecret } = data;
-        await stripe.confirmCardPayment(clientSecret, {
-          payment_method: {
-            card: elements.getElement(CardElement),
-            billing_details: {
-              name: userName,
-            },
-          },
+
+        await stripe.createPaymentMethod({
+          type: "card",
+          card: elements.getElement(CardElement),
         });
       }
       setLoading(false);
@@ -321,19 +317,14 @@ function UpdatePlans(props) {
         setLoading(true);
         const { plan, customerID, email } = user;
         if (plan === "free") {
-          const { data } = await client.post(
+          await client.post(
             "/subscription/create",
             { email, customerId: customerID, plan: selectedPlan },
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
-          const { clientSecret } = data;
-          await stripe.confirmCardPayment(clientSecret, {
-            payment_method: {
-              card: elements.getElement(CardElement),
-              billing_details: {
-                name: userName,
-              },
-            },
+          await stripe.createPaymentMethod({
+            type: "card",
+            card: elements.getElement(CardElement),
           });
         } else {
           await client.patch(
@@ -772,20 +763,20 @@ function HomePage() {
             />
           ) : (
             <Fragment>
-              {showPlans ? (
-                <UpdatePlans
-                  auth={auth}
-                  getData={getData}
-                  user={user}
-                  setShowPlans={setShowPlans}
-                />
-              ) : (
+              {!showPlans ? (
                 <UserContent
                   user={user}
                   result={result}
                   content={content}
                   setShowPlans={setShowPlans}
                   signOutUser={signOutUser}
+                />
+              ) : (
+                <UpdatePlans
+                  auth={auth}
+                  getData={getData}
+                  user={user}
+                  setShowPlans={setShowPlans}
                 />
               )}
             </Fragment>
