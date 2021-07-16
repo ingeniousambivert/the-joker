@@ -35,8 +35,6 @@ const UserSchema = new Schema(
       enum: ["none", "free", "basic", "pro"],
       default: "none",
     },
-    hasTrial: { type: Boolean, default: false },
-    endDate: { type: Date, default: null },
   },
   { timestamps: true }
 );

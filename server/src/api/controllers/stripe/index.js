@@ -29,8 +29,6 @@ async function stripeWebhooks(req, res) {
           }
 
           user.subscriptionStatus = "active";
-          user.hasTrial = true;
-          user.endDate = new Date(data.current_period_end * 1000);
 
           await user.save();
         } else {
@@ -54,15 +52,6 @@ async function stripeWebhooks(req, res) {
             user.plan = "pro";
           }
           user.subscriptionStatus = "active";
-          const isOnTrial = data.status === "trialing";
-
-          if (isOnTrial) {
-            user.hasTrial = true;
-            user.endDate = new Date(data.current_period_end * 1000);
-          } else if (data.status === "active") {
-            user.hasTrial = false;
-            user.endDate = new Date(data.current_period_end * 1000);
-          }
 
           if (data.canceled_at) {
             console.log("Cancelling Subscription");
@@ -71,8 +60,6 @@ async function stripeWebhooks(req, res) {
             user.subscriptionID = null;
             user.productID = null;
             user.plan = "free";
-            user.hasTrial = false;
-            user.endDate = null;
           }
 
           await user.save();
@@ -91,8 +78,6 @@ async function stripeWebhooks(req, res) {
           user.subscriptionID = null;
           user.productID = null;
           user.plan = "free";
-          user.hasTrial = false;
-          user.endDate = null;
 
           await user.save();
         } else {
