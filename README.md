@@ -8,7 +8,7 @@ A minimal app that will tell you jokes based on your subscription
 
  This variant provides a MERN App with a Trial Period on Stripe Subscriptions.
  ```bash
-    git clone[ https://github.com/ingeniousambivert/express-starter.git](https://github.com/ingeniousambivert/the-joker.git)
+    git clone https://github.com/ingeniousambivert/the-joker.git
     git checkout elements-trial
   ```
 
@@ -17,7 +17,7 @@ A minimal app that will tell you jokes based on your subscription
  This variant provides a MERN App without a Trial Period on Stripe Subscriptions.
 
  ```bash
-    git clone[ https://github.com/ingeniousambivert/express-starter.git](https://github.com/ingeniousambivert/the-joker.git)
+    git clone https://github.com/ingeniousambivert/the-joker.git
     git checkout elements
   ```
 
