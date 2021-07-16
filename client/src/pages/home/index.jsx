@@ -19,7 +19,7 @@ function InitialPlans(props) {
   const [error, setError] = useState(null);
   const [showCheckout, setShowCheckout] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const { user, setShowInitialPlans, signOutUser, auth } = props;
+  const { user, setShowInitialPlans, signOutUser, auth, getData } = props;
   const { id, accessToken } = auth;
   const { register, handleSubmit } = useForm({ defaultValues: user });
 
@@ -83,23 +83,29 @@ function InitialPlans(props) {
     try {
       if (selectedPlan !== "free") {
         setLoading(true);
-        await client.post(
+        const { data } = await client.post(
           "/subscription/create",
           { email, customerId: customerID, plan: selectedPlan },
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
+        const { clientSecret } = data;
 
-        await stripe.createPaymentMethod({
-          type: "card",
-          card: elements.getElement(CardElement),
+        await stripe.confirmCardSetup(clientSecret, {
+          payment_method: {
+            card: elements.getElement(CardElement),
+            billing_details: {
+              name: userName,
+            },
+          },
         });
       }
+      getData(auth);
       setLoading(false);
       setShowInitialPlans(false);
       setShowCheckout(false);
     } catch (error) {
       setLoading(false);
-      setError(`Payment failed : ${error.message}`);
+      setError("Payment failed : There was an error. Please try again later");
       console.log(error);
     }
   };
@@ -317,14 +323,20 @@ function UpdatePlans(props) {
         setLoading(true);
         const { plan, customerID, email } = user;
         if (plan === "free") {
-          await client.post(
+          const { data } = await client.post(
             "/subscription/create",
             { email, customerId: customerID, plan: selectedPlan },
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
-          await stripe.createPaymentMethod({
-            type: "card",
-            card: elements.getElement(CardElement),
+          const { clientSecret } = data;
+
+          await stripe.confirmCardSetup(clientSecret, {
+            payment_method: {
+              card: elements.getElement(CardElement),
+              billing_details: {
+                name: userName,
+              },
+            },
           });
         } else {
           await client.patch(
@@ -393,42 +405,88 @@ function UpdatePlans(props) {
             </Fragment>
           ) : (
             <Fragment>
-              <ModalHeader>
-                <p>Pay with your card</p>
-                <p className="text-sm font-semibold text-gray-400 mt-2">
-                  Subscribing to&nbsp;
-                  <span className="capitalize text-indigo-500 font-semibold">
-                    {selectedPlan}
-                  </span>
-                  &nbsp;plan
-                </p>
-              </ModalHeader>
-              <ModalBody>
-                {error && (
-                  <div className="my-5 rounded bg-red-50 border border-red-300 p-5 text-center text-red-600">
-                    {error}
-                  </div>
-                )}
-                <form onSubmit={onPaymentSubmit}>
-                  <CardElement options={cardOptions} />
-                  <div className="flex flex-row gap-4 mt-4">
-                    <button
-                      type="submit"
-                      disabled={!stripe}
-                      className="text-sm px-6 py-1 mt-4 text-white shadow focus:outline-none bg-indigo-500 rounded hover:bg-indigo-600 transition duration-300"
-                    >
-                      {loading ? "Subscribing" : "Subscribe"}
-                    </button>
-                    <button
-                      onClick={toggleCheckout}
-                      type="submit"
-                      className="text-sm px-6 py-1 mt-4 text-white focus:outline-none bg-red-500 rounded hover:bg-red-600 transition duration-300"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </ModalBody>
+              {user.plan === "free" ? (
+                <Fragment>
+                  <ModalHeader>
+                    <p>Pay with your card</p>
+                    <p className="text-sm font-semibold text-gray-400 mt-2">
+                      Subscribing to&nbsp;
+                      <span className="capitalize text-indigo-500 font-semibold">
+                        {selectedPlan}
+                      </span>
+                      &nbsp;plan
+                    </p>
+                  </ModalHeader>
+                  <ModalBody>
+                    {error && (
+                      <div className="my-5 rounded bg-red-50 border border-red-300 p-5 text-center text-red-600">
+                        {error}
+                      </div>
+                    )}
+                    <form onSubmit={onPaymentSubmit}>
+                      <CardElement options={cardOptions} />
+                      <div className="flex flex-row gap-4 mt-4">
+                        <button
+                          type="submit"
+                          disabled={!stripe}
+                          className="text-sm px-6 py-1 mt-4 text-white shadow focus:outline-none bg-indigo-500 rounded hover:bg-indigo-600 transition duration-300"
+                        >
+                          {loading ? "Subscribing" : "Subscribe"}
+                        </button>
+                        <button
+                          onClick={toggleCheckout}
+                          type="submit"
+                          className="text-sm px-6 py-1 mt-4 text-white focus:outline-none bg-red-500 rounded hover:bg-red-600 transition duration-300"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </ModalBody>
+                </Fragment>
+              ) : (
+                <Fragment>
+                  <ModalHeader>
+                    <p>Update your subscription</p>
+                    <p className="text-sm font-semibold text-gray-400 mt-2">
+                      Subscribing to&nbsp;
+                      <span className="capitalize text-indigo-500 font-semibold">
+                        {selectedPlan}
+                      </span>
+                      &nbsp;plan
+                    </p>
+                  </ModalHeader>
+                  <ModalBody>
+                    {error && (
+                      <div className="my-5 rounded bg-red-50 border border-red-300 p-5 text-center text-red-600">
+                        {error}
+                      </div>
+                    )}
+                    <form onSubmit={onPaymentSubmit}>
+                      <p>
+                        Are you sure? This will update your future
+                        subscriptions. The current subscription will be active
+                      </p>
+                      <div className="flex flex-row gap-4 mt-4">
+                        <button
+                          type="submit"
+                          disabled={!stripe}
+                          className="text-sm px-6 py-1 mt-4 text-white shadow focus:outline-none bg-indigo-500 rounded hover:bg-indigo-600 transition duration-300"
+                        >
+                          {loading ? "Subscribing" : "Subscribe"}
+                        </button>
+                        <button
+                          onClick={toggleCheckout}
+                          type="submit"
+                          className="text-sm px-6 py-1 mt-4 text-white focus:outline-none bg-red-500 rounded hover:bg-red-600 transition duration-300"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </ModalBody>
+                </Fragment>
+              )}
             </Fragment>
           )}
         </Modal>
@@ -757,6 +815,7 @@ function HomePage() {
           {showInitialPlans ? (
             <InitialPlans
               auth={auth}
+              getData={getData}
               user={user}
               signOutUser={signOutUser}
               setShowInitialPlans={setShowInitialPlans}
